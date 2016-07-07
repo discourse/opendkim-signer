@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e
+
+# First, fire up possibly the world's *worst* syslog server
+/usr/bin/socat UNIX-RECV:/dev/log,mode=0666 stderr &
+
+# Do some config
+if [ "x$DKIM_SELECTOR" = "x" ]; then
+	echo "DKIM_SELECTOR env var is not set." >&2
+	exit 1
+fi
+
+echo "DKIM Selector is $DKIM_SELECTOR" >&2
+/bin/sed -i "s|%%DKIM_SELECTOR%%|$DKIM_SELECTOR|" /etc/opendkim.conf
+
+if [ "x$DKIM_KEY_FILE" = "x" ]; then
+	echo "DKIM_KEY_FILE env var is not set." >&2
+	exit 1
+fi
+
+echo "DKIM key file is $DKIM_KEY_FILE" >&2
+/bin/sed -i "s|%%DKIM_KEY_FILE%%|$DKIM_KEY_FILE|" /etc/opendkim.conf
+
+exec /usr/sbin/opendkim -x /etc/opendkim.conf
