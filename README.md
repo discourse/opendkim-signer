@@ -22,3 +22,8 @@ set in order for things to work:
 * `DKIM_SELECTOR` -- the short, unique string to use as the "DKIM selector"
   on all mail signed by this instance.  This needs to line up with the DNS
   records you created.
+
+* `MILTER_SOCKET` -- the value for the `Socket` parameter in
+  `opendkim.conf`.  You probably want to read [the `opendkim.conf`
+  manpage](http://www.opendkim.org/opendkim.conf.5.html) to find out exactly
+  what is legal here.

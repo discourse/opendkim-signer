@@ -1,13 +1,13 @@
-# opendkim is only in edge as of 2016-07-04
-FROM alpine:edge
+# libmilter in alpine is IPv4 only...
+FROM ubuntu:14.04
 
 EXPOSE 8891
 
-RUN echo http://dl-cdn.alpinelinux.org/alpine/edge/testing >>/etc/apk/repositories \
-	&& apk update \
-	&& apk add opendkim socat \
-	&& adduser -SDH -u 9001 -h /usr/share/empty opendkim \
-	&& rm -f /var/cache/apk/*
+RUN apt-get update \
+	&& adduser --uid 9001 --home /usr/share/empty --disabled-password --disabled-login opendkim \
+	&& apt-get install -y opendkim socklog \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
 
 COPY opendkim.conf /etc/
 COPY init /sbin/

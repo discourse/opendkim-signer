@@ -2,8 +2,8 @@
 
 set -e
 
-# First, fire up possibly the world's *worst* syslog server
-/usr/bin/socat UNIX-RECV:/dev/log,mode=0666 stderr &
+# Derpy-simple syslog server
+/usr/sbin/socklog -R &
 
 # Do some config
 if [ "x$DKIM_SELECTOR" = "x" ]; then
@@ -21,5 +21,13 @@ fi
 
 echo "DKIM key file is $DKIM_KEY_FILE" >&2
 /bin/sed -i "s|%%DKIM_KEY_FILE%%|$DKIM_KEY_FILE|" /etc/opendkim.conf
+
+if [ "x$MILTER_SOCKET" = "x" ]; then
+	echo "MILTER_SOCKET env var is not set." >&2
+	exit 1
+fi
+
+echo "Milter socket is $MILTER_SOCKET" >&2
+/bin/sed -i "s|%%MILTER_SOCKET%%|$MILTER_SOCKET|" /etc/opendkim.conf
 
 exec /usr/sbin/opendkim -x /etc/opendkim.conf
