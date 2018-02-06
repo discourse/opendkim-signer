@@ -27,3 +27,8 @@ set in order for things to work:
   `opendkim.conf`.  You probably want to read [the `opendkim.conf`
   manpage](http://www.opendkim.org/opendkim.conf.5.html) to find out exactly
   what is legal here.
+
+# Publishing
+
+Running `make` will build and push. The tag will be generated from the date and time.
+If you need to specify one, run `make TAG=value`
