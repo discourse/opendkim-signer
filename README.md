@@ -1,5 +1,6 @@
 This container is about as stupidly simple a DKIM signer as is possible: for
-every message received on port 8891 (using the milter protocol), it signs
+every message received on whatever socket you specify with the
+`MILTER_SOCKET` environment variable (using the milter protocol), it signs
 the message using the specified private key and selector.  That's it.
 
 
@@ -30,5 +31,4 @@ set in order for things to work:
 
 # Publishing
 
-Running `make` will build and push. The tag will be generated from the date and time.
-If you need to specify one, run `make TAG=value`
+Running `make` will build and push.
