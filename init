@@ -12,7 +12,6 @@ if [ "x$DKIM_SELECTOR" = "x" ]; then
 fi
 
 echo "DKIM Selector is $DKIM_SELECTOR" >&2
-/bin/sed -i "s|%%DKIM_SELECTOR%%|$DKIM_SELECTOR|" /etc/opendkim.conf
 
 if [ "x$DKIM_KEY_FILE" = "x" ]; then
 	echo "DKIM_KEY_FILE env var is not set." >&2
@@ -20,7 +19,14 @@ if [ "x$DKIM_KEY_FILE" = "x" ]; then
 fi
 
 echo "DKIM key file is $DKIM_KEY_FILE" >&2
-/bin/sed -i "s|%%DKIM_KEY_FILE%%|$DKIM_KEY_FILE|" /etc/opendkim.conf
+
+if [ "x$SIGNING_DOMAIN" = "x" ]; then
+	echo "SIGNING_DOMAIN env var is not set." >&2
+	exit 1
+fi
+
+echo "dkim $SIGNING_DOMAIN:$DKIM_SELECTOR:$DKIM_KEY_FILE" >/etc/opendkim_key_table
+echo "* dkim" >/etc/opendkim_signing_table
 
 if [ "x$MILTER_SOCKET" = "x" ]; then
 	echo "MILTER_SOCKET env var is not set." >&2
