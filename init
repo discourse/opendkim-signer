@@ -5,35 +5,7 @@ set -e
 # Direct-relay syslog messages to stderr, for mobystash to pick up
 /usr/bin/socat UNIX-RECV:/dev/log,mode=0666 stderr &
 
-# Do some config
-if [ "x$DKIM_SELECTOR" = "x" ]; then
-	echo "DKIM_SELECTOR env var is not set." >&2
-	exit 1
-fi
-
-echo "DKIM Selector is $DKIM_SELECTOR" >&2
-
-if [ "x$DKIM_KEY_FILE" = "x" ]; then
-	echo "DKIM_KEY_FILE env var is not set." >&2
-	exit 1
-fi
-
-echo "DKIM key file is $DKIM_KEY_FILE" >&2
-
-if [ "x$SIGNING_DOMAIN" = "x" ]; then
-	echo "SIGNING_DOMAIN env var is not set." >&2
-	exit 1
-fi
-
-echo "dkim $SIGNING_DOMAIN:$DKIM_SELECTOR:$DKIM_KEY_FILE" >/etc/opendkim_key_table
-echo "* dkim" >/etc/opendkim_signing_table
-
-if [ "x$MILTER_SOCKET" = "x" ]; then
-	echo "MILTER_SOCKET env var is not set." >&2
-	exit 1
-fi
-
-echo "Milter socket is $MILTER_SOCKET" >&2
-/bin/sed -i "s|%%MILTER_SOCKET%%|$MILTER_SOCKET|" /etc/opendkim.conf
+# Call a script to validate and build the opendkim configuration
+/usr/local/sbin/build-dkim-config
 
 exec /usr/sbin/opendkim -x /etc/opendkim.conf

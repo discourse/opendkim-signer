@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+
+require 'erb'
+require 'etc'
+
+DEFAULT_DOMAIN='DKIM_DEFAULT_DOMAIN'
+DKIM_PATH='/etc/opendkim'
+KEY_PREFIX='DKIM_KEY_'
+MILTER_SOCKET='MILTER_SOCKET'
+SELECTOR_PREFIX='DKIM_SELECTOR_'
+
+def fatal(msg)
+  $stderr.puts(msg)
+  exit 1
+end
+
+keys = ENV.select{ |x| x.start_with? KEY_PREFIX }.transform_keys { |k| k[(KEY_PREFIX.length)..k.length].tr('_', '.') }
+selectors = ENV.select{ |x| x.start_with? SELECTOR_PREFIX }.transform_keys { |k| k[(SELECTOR_PREFIX.length)..k.length].tr('_', '.') }
+
+if keys.keys.sort != selectors.keys.sort
+  fatal <<~EOT
+  mismatch between provided domain keys and selectors:
+    keys:      #{keys.keys.sort.join(',')}
+    selectors: #{selectors.keys.sort.join(',')}
+  EOT
+end
+
+default_domain = ENV[DEFAULT_DOMAIN]
+fatal("#{DEFAULT_DOMAIN} env var is unset!") if default_domain.nil?
+fatal("#{DEFAULT_DOMAIN} env var is blank!") if default_domain.length == 0
+fatal("no configuration specified for default domain") if !keys.has_key? default_domain
+
+milter_socket = ENV[MILTER_SOCKET]
+fatal("#{MILTER_SOCKET} env var is unset!") if milter_socket.nil?
+fatal("#{MILTER_SOCKET} env var is blank!") if milter_socket.length == 0
+
+# everything looks good, we should to proceed
+puts "Default domain: #{default_domain}"
+puts "Configured domains: #{keys.keys.sort.join(',')}"
+puts "Milter socket: #{milter_socket}"
+
+# write out our key files
+Dir.mkdir(DKIM_PATH) rescue nil
+keys.keys.each do |domain|
+  keyfile = File.join(DKIM_PATH, "#{domain}.key")
+  File.open(keyfile, 'w') do |f|
+    f.write(keys[domain])
+    f.write("\n")
+  end
+  File.chmod(0440, keyfile)
+  File.chown(nil, Etc.getgrnam('opendkim').gid, keyfile)
+end
+
+# write out the keytable
+File.open('/etc/opendkim_key_table', 'w') do |f|
+  selectors.sort.each do |domain, selector|
+    keyfile = File.join(DKIM_PATH, "#{domain}.key")
+    f.write("#{domain} #{domain}:#{selector}:#{keyfile}\n")
+  end
+end
+
+# write out the signing table
+File.open('/etc/opendkim_signing_table', 'w') do |f|
+  selectors.keys.sort.each do |domain|
+    # the "regular expression file" uses wildcard patterns
+    f.write("*@#{domain} #{domain}\n")
+  end
+  f.write("* #{default_domain}\n")
+end
+
+# write out the actual config file
+File.open('/etc/opendkim.conf', 'w') do |f|
+  template = File.open('/etc/opendkim.conf.erb').read
+  f.write(ERB.new(template).result_with_hash({ milter_socket: milter_socket }))
+end
