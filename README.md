@@ -14,7 +14,7 @@ and selector, using env vars.  Also, specify a milter socket location so
 that your MTA can get the messages to the DKIM server.
 
 
-## Required Environment Variables
+## Environment Variables
 
 Instances of this image require the below environment variables to be
 set in order for things to work.
@@ -31,14 +31,16 @@ converted to underscores. For example: `DKIM_KEY_discourse_org` and
   "DKIM selector" on all mail signed for "domain". This needs to line up with
   domainkey DNS records for "domain".
 
-The following two variables must always be set:
-
-* `DKIM_DEFAULT_DOMAIN` -- the default domain to use on all other mail.
+The following variable must always be set:
 
 * `MILTER_SOCKET` -- the value for the `Socket` parameter in
   `opendkim.conf`.  You probably want to read [the `opendkim.conf`
   manpage](http://www.opendkim.org/opendkim.conf.5.html) to find out exactly
   what is legal here.
+
+The following variable is optional:
+
+* `DKIM_DEFAULT_DOMAIN` -- the default domain to use on all other mail.
 
 # Publishing
 

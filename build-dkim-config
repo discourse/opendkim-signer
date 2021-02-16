@@ -19,23 +19,24 @@ selectors = ENV.select{ |x| x.start_with? SELECTOR_PREFIX }.transform_keys { |k|
 
 if keys.keys.sort != selectors.keys.sort
   fatal <<~EOT
-  mismatch between provided domain keys and selectors:
+  mismatch between domain list in keys and selectors:
     keys:      #{keys.keys.sort.join(',')}
     selectors: #{selectors.keys.sort.join(',')}
   EOT
 end
 
 default_domain = ENV[DEFAULT_DOMAIN]
-fatal("#{DEFAULT_DOMAIN} env var is unset!") if default_domain.nil?
-fatal("#{DEFAULT_DOMAIN} env var is blank!") if default_domain.length == 0
-fatal("no configuration specified for default domain") if !keys.has_key? default_domain
+if default_domain
+  fatal("#{DEFAULT_DOMAIN} env var is blank!") if default_domain.length == 0
+  fatal("no configuration specified for default domain") if !keys.has_key? default_domain
+end
 
 milter_socket = ENV[MILTER_SOCKET]
 fatal("#{MILTER_SOCKET} env var is unset!") if milter_socket.nil?
 fatal("#{MILTER_SOCKET} env var is blank!") if milter_socket.length == 0
 
 # everything looks good, we should to proceed
-puts "Default domain: #{default_domain}"
+puts "Default domain: #{default_domain or "(none)"}"
 puts "Configured domains: #{keys.keys.sort.join(',')}"
 puts "Milter socket: #{milter_socket}"
 
@@ -65,7 +66,10 @@ File.open('/etc/opendkim_signing_table', 'w') do |f|
     # the "regular expression file" uses wildcard patterns
     f.write("*@#{domain} #{domain}\n")
   end
-  f.write("* #{default_domain}\n")
+  if default_domain
+    # we already checked above that default_domain, if present, is a valid key to the KeyTable
+    f.write("* #{default_domain}\n")
+  end
 end
 
 # write out the actual config file
