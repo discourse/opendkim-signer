@@ -14,6 +14,10 @@ def fatal(msg)
   exit 1
 end
 
+%w[DKIM_KEY_FILE DKIM_SELECTOR SIGNING_DOMAIN].each do |k|
+  fatal("The environment variable #{k} has been deprecated (see README.md), aborting") if ENV.has_key? k
+end
+
 keys = ENV.select{ |x| x.start_with? KEY_PREFIX }.transform_keys { |k| k[(KEY_PREFIX.length)..k.length].tr('_', '.') }
 selectors = ENV.select{ |x| x.start_with? SELECTOR_PREFIX }.transform_keys { |k| k[(SELECTOR_PREFIX.length)..k.length].tr('_', '.') }
 
